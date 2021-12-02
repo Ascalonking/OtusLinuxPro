@@ -1,0 +1,404 @@
+
+
+[root@zfs ~]# lsblk
+NAME   MAJ:MIN RM SIZE RO TYPE MOUNTPOINT
+sda      8:0    0  40G  0 disk
+└─sda1   8:1    0  40G  0 part /
+sdb      8:16   0   1G  0 disk
+sdc      8:32   0   1G  0 disk
+sdd      8:48   0   1G  0 disk
+sde      8:64   0   1G  0 disk
+sdf      8:80   0   1G  0 disk
+sdg      8:96   0   1G  0 disk
+sdh      8:112  0   1G  0 disk
+sdi      8:128  0   1G  0 disk
+[root@zfs ~]#
+[root@zfs ~]# zpool create otus1 mirror /dev/sdb /dev/sdc
+[root@zfs ~]# zpool create otus2 mirror /dev/sdd /dev/sde
+[root@zfs ~]# zpool create otus3 mirror /dev/sdf /dev/sdg
+[root@zfs ~]# zpool create otus4 mirror /dev/sdh /dev/sdi
+[root@zfs ~]# zpool list
+NAME    SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
+otus1   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+otus2   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+otus3   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+otus4   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+[root@zfs ~]# Connection to 127.0.0.1 closed by remote host.
+Connection to 127.0.0.1 closed.
+kingascalon@MacBook-Pro-King zfs % vagrant ssh
+VM must be running to open SSH connection. Run `vagrant up`
+to start the virtual machine.
+kingascalon@MacBook-Pro-King zfs % vagrant up
+Bringing machine 'zfs' up with 'virtualbox' provider...
+==> zfs: Checking if box 'centos/7' version '2004.01' is up to date...
+==> zfs: Resuming suspended VM...
+==> zfs: Booting VM...
+==> zfs: Waiting for machine to boot. This may take a few minutes...
+    zfs: SSH address: 127.0.0.1:2222
+    zfs: SSH username: vagrant
+    zfs: SSH auth method: private key
+==> zfs: Machine booted and ready!
+==> zfs: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==> zfs: flag to force provisioning. Provisioners marked to run always will still run.
+kingascalon@MacBook-Pro-King zfs % vagrant ssh
+^LLast login: Thu Dec  2 06:46:48 2021 from 10.0.2.2
+[vagrant@zfs ~]$
+[vagrant@zfs ~]$ zpool list
+NAME    SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
+otus1   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+otus2   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+otus3   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+otus4   960M  91,5K   960M        -         -     0%     0%  1.00x    ONLINE  -
+[vagrant@zfs ~]$ zpool status
+  pool: otus1
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus1       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdb     ONLINE       0     0     0
+      sdc     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus2
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus2       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdd     ONLINE       0     0     0
+      sde     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus3
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus3       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdf     ONLINE       0     0     0
+      sdg     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus4
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus4       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdh     ONLINE       0     0     0
+      sdi     ONLINE       0     0     0
+
+errors: No known data errors
+[vagrant@zfs ~]$ zfs set compression=lzjb otus1
+cannot set property for 'otus1': permission denied
+[vagrant@zfs ~]$ sudo -i
+[root@zfs ~]# zfs set compression=lzjb otus1
+[root@zfs ~]# zfs set compression=lz4 otus2
+[root@zfs ~]# zfs set compression=gzip-9 otus3
+[root@zfs ~]# zfs set compression=zle otus4
+[root@zfs ~]# zfs get all | grep compression
+otus1  compression           lzjb                       local
+otus2  compression           lz4                        local
+otus3  compression           gzip-9                     local
+otus4  compression           zle                        local
+[root@zfs ~]# for i in {1..4}; do wget -P /otus$i https://gutenberg.org/cache/epub/2600/pg2600.converter.log; done
+--2021-12-02 08:03:34--  https://gutenberg.org/cache/epub/2600/pg2600.converter.log
+Распознаётся gutenberg.org (gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Подключение к gutenberg.org (gutenberg.org)|152.19.134.47|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 200 OK
+Длина: 40767635 (39M) [text/plain]
+Сохранение в: «/otus1/pg2600.converter.log»
+
+100%[==========================================================================================================>] 40 767 635  1,57MB/s   за 25s
+
+2021-12-02 08:04:00 (1,58 MB/s) - «/otus1/pg2600.converter.log» сохранён [40767635/40767635]
+
+--2021-12-02 08:04:00--  https://gutenberg.org/cache/epub/2600/pg2600.converter.log
+Распознаётся gutenberg.org (gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Подключение к gutenberg.org (gutenberg.org)|152.19.134.47|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 200 OK
+Длина: 40767635 (39M) [text/plain]
+Сохранение в: «/otus2/pg2600.converter.log»
+
+100%[==========================================================================================================>] 40 767 635  3,13MB/s   за 20s
+
+2021-12-02 08:04:21 (1,93 MB/s) - «/otus2/pg2600.converter.log» сохранён [40767635/40767635]
+
+--2021-12-02 08:04:21--  https://gutenberg.org/cache/epub/2600/pg2600.converter.log
+Распознаётся gutenberg.org (gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Подключение к gutenberg.org (gutenberg.org)|152.19.134.47|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 200 OK
+Длина: 40767635 (39M) [text/plain]
+Сохранение в: «/otus3/pg2600.converter.log»
+
+100%[==========================================================================================================>] 40 767 635  1,88MB/s   за 15s
+
+2021-12-02 08:04:36 (2,60 MB/s) - «/otus3/pg2600.converter.log» сохранён [40767635/40767635]
+
+--2021-12-02 08:04:36--  https://gutenberg.org/cache/epub/2600/pg2600.converter.log
+Распознаётся gutenberg.org (gutenberg.org)... 152.19.134.47, 2610:28:3090:3000:0:bad:cafe:47
+Подключение к gutenberg.org (gutenberg.org)|152.19.134.47|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 200 OK
+Длина: 40767635 (39M) [text/plain]
+Сохранение в: «/otus4/pg2600.converter.log»
+
+100%[==========================================================================================================>] 40 767 635  3,74MB/s   за 17s
+
+2021-12-02 08:04:55 (2,25 MB/s) - «/otus4/pg2600.converter.log» сохранён [40767635/40767635]
+
+[root@zfs ~]# ls -l /otus*
+/otus1:
+total 22012
+-rw-r--r--. 1 root root 40767635 дек  2  2021 pg2600.converter.log
+
+/otus2:
+total 17968
+-rw-r--r--. 1 root root 40767635 дек  2  2021 pg2600.converter.log
+
+/otus3:
+total 10947
+-rw-r--r--. 1 root root 40767635 дек  2  2021 pg2600.converter.log
+
+/otus4:
+total 39840
+-rw-r--r--. 1 root root 40767635 дек  2  2021 pg2600.converter.log
+[root@zfs ~]# zfs list
+NAME    USED  AVAIL     REFER  MOUNTPOINT
+otus1  21,6M   810M     21,5M  /otus1
+otus2  17,6M   814M     17,6M  /otus2
+otus3  10,8M   821M     10,7M  /otus3
+otus4  39,0M   793M     38,9M  /otus4
+[root@zfs ~]# zfs get all | grep compressratio | grep -v ref
+otus1  compressratio         1.81x                      -
+otus2  compressratio         2.22x                      -
+otus3  compressratio         3.64x                      -
+otus4  compressratio         1.00x                      -
+[root@zfs ~]# wget -O archive.tar.gz --no-check-certificate ‘https://drive.google.com/u/0/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg&e xport=download’
+[1] 3844
+-bash: e: command not found
+[root@zfs ~]# ‘https://drive.google.com/u/0/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg: Отсутствует схема.
+wget -O archiv
+[1]+  Exit 1                  wget -O archive.tar.gz --no-check-certificate ‘https://drive.google.com/u/0/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+[root@zfs ~]#
+[root@zfs ~]#
+[root@zfs ~]#
+[root@zfs ~]#
+[root@zfs ~]#
+[root@zfs ~]# wget -O archive.tar.gz --no-check-certificate https://drive.google.com/u/0/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg&e xport=download
+[1] 3846
+-bash: e: command not found
+[root@zfs ~]# --2021-12-02 08:14:25--  https://drive.google.com/u/0/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+Распознаётся drive.google.com (drive.google.com)... 142.250.74.46, 2a00:1450:400f:801::200e
+Подключение к drive.google.com (drive.google.com)|142.250.74.46|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 302 Moved Temporarily
+Адрес: https://doc-0c-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/76ih7ucr80u5h57vat4lfcqlrkaohhsl/1638442500000/16189157874053420687/*/1KRBNW33QWqbvbVHa3hLJivOAt60yukkg [переход]
+Предупреждение: в HTTP маски не поддерживаются.
+--2021-12-02 08:14:32--  https://doc-0c-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/76ih7ucr80u5h57vat4lfcqlrkaohhsl/1638442500000/16189157874053420687/*/1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+Распознаётся doc-0c-bo-docs.googleusercontent.com (doc-0c-bo-docs.googleusercontent.com)... 142.250.74.65, 2a00:1450:400f:802::2001
+Подключение к doc-0c-bo-docs.googleusercontent.com (doc-0c-bo-docs.googleusercontent.com)|142.250.74.65|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 200 OK
+Длина: 7275140 (6,9M) [application/x-gzip]
+Сохранение в: «archive.tar.gz»
+
+100%[==========================================================================================================>] 7 275 140   7,98MB/s   за 0,9s
+
+2021-12-02 08:14:33 (7,98 MB/s) - «archive.tar.gz» сохранён [7275140/7275140]
+
+
+[1]+  Done                    wget -O archive.tar.gz --no-check-certificate https://drive.google.com/u/0/uc?id=1KRBNW33QWqbvbVHa3hLJivOAt60yukkg
+[root@zfs ~]# tar -xzvf archive.tar.gz
+zpoolexport/
+zpoolexport/filea
+zpoolexport/fileb
+[root@zfs ~]# zpool import -d zpoolexport/
+   pool: otus
+     id: 6554193320433390805
+  state: ONLINE
+ action: The pool can be imported using its name or numeric identifier.
+ config:
+
+  otus                         ONLINE
+    mirror-0                   ONLINE
+      /root/zpoolexport/filea  ONLINE
+      /root/zpoolexport/fileb  ONLINE
+[root@zfs ~]# zpool import -d zpoolexport/ otus
+[root@zfs ~]# zpool status
+  pool: otus
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME                         STATE     READ WRITE CKSUM
+  otus                         ONLINE       0     0     0
+    mirror-0                   ONLINE       0     0     0
+      /root/zpoolexport/filea  ONLINE       0     0     0
+      /root/zpoolexport/fileb  ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus1
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus1       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdb     ONLINE       0     0     0
+      sdc     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus2
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus2       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdd     ONLINE       0     0     0
+      sde     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus3
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus3       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdf     ONLINE       0     0     0
+      sdg     ONLINE       0     0     0
+
+errors: No known data errors
+
+  pool: otus4
+ state: ONLINE
+  scan: none requested
+config:
+
+  NAME        STATE     READ WRITE CKSUM
+  otus4       ONLINE       0     0     0
+    mirror-0  ONLINE       0     0     0
+      sdh     ONLINE       0     0     0
+      sdi     ONLINE       0     0     0
+
+errors: No known data errors
+[root@zfs ~]# zpool import -d zpoolexport/ otus newotus
+cannot import 'otus': no such pool available
+[root@zfs ~]# zpool get all otus
+NAME  PROPERTY                       VALUE                          SOURCE
+otus  size                           480M                           -
+otus  capacity                       0%                             -
+otus  altroot                        -                              default
+otus  health                         ONLINE                         -
+otus  guid                           6554193320433390805            -
+otus  version                        -                              default
+otus  bootfs                         -                              default
+otus  delegation                     on                             default
+otus  autoreplace                    off                            default
+otus  cachefile                      -                              default
+otus  failmode                       wait                           default
+otus  listsnapshots                  off                            default
+otus  autoexpand                     off                            default
+otus  dedupditto                     0                              default
+otus  dedupratio                     1.00x                          -
+otus  free                           478M                           -
+otus  allocated                      2,09M                          -
+otus  readonly                       off                            -
+otus  ashift                         0                              default
+otus  comment                        -                              default
+otus  expandsize                     -                              -
+otus  freeing                        0                              -
+otus  fragmentation                  0%                             -
+otus  leaked                         0                              -
+otus  multihost                      off                            default
+otus  checkpoint                     -                              -
+otus  load_guid                      868732117834544340             -
+otus  autotrim                       off                            default
+otus  feature@async_destroy          enabled                        local
+otus  feature@empty_bpobj            active                         local
+otus  feature@lz4_compress           active                         local
+otus  feature@multi_vdev_crash_dump  enabled                        local
+otus  feature@spacemap_histogram     active                         local
+otus  feature@enabled_txg            active                         local
+otus  feature@hole_birth             active                         local
+otus  feature@extensible_dataset     active                         local
+otus  feature@embedded_data          active                         local
+otus  feature@bookmarks              enabled                        local
+otus  feature@filesystem_limits      enabled                        local
+otus  feature@large_blocks           enabled                        local
+otus  feature@large_dnode            enabled                        local
+otus  feature@sha512                 enabled                        local
+otus  feature@skein                  enabled                        local
+otus  feature@edonr                  enabled                        local
+otus  feature@userobj_accounting     active                         local
+otus  feature@encryption             enabled                        local
+otus  feature@project_quota          active                         local
+otus  feature@device_removal         enabled                        local
+otus  feature@obsolete_counts        enabled                        local
+otus  feature@zpool_checkpoint       enabled                        local
+otus  feature@spacemap_v2            active                         local
+otus  feature@allocation_classes     enabled                        local
+otus  feature@resilver_defer         enabled                        local
+otus  feature@bookmark_v2            enabled                        local
+[root@zfs ~]# zfs get available otus
+NAME  PROPERTY   VALUE  SOURCE
+otus  available  350M   -
+[root@zfs ~]# zfs get readonly otus
+NAME  PROPERTY  VALUE   SOURCE
+otus  readonly  off     default
+[root@zfs ~]# zfs get recordsize otus
+NAME  PROPERTY    VALUE    SOURCE
+otus  recordsize  128K     local
+[root@zfs ~]# zfs get compression otus
+NAME  PROPERTY     VALUE     SOURCE
+otus  compression  zle       local
+[root@zfs ~]# zfs get checksum otus
+NAME  PROPERTY  VALUE      SOURCE
+otus  checksum  sha256     local
+[root@zfs ~]# wget -O otus_task2.file --no-check-certificate https://drive.google.com/u/0/uc?id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG&e xport=download
+[1] 4252
+-bash: e: command not found
+[root@zfs ~]# --2021-12-02 08:41:32--  https://drive.google.com/u/0/uc?id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG
+Распознаётся drive.google.com (drive.google.com)... 142.250.74.46, 2a00:1450:400f:801::200e
+Подключение к drive.google.com (drive.google.com)|142.250.74.46|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 302 Moved Temporarily
+Адрес: https://doc-00-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/2lhh6bmv0s0o4pre74iqnbnld13nod6j/1638444000000/16189157874053420687/*/1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG [переход]
+Предупреждение: в HTTP маски не поддерживаются.
+--2021-12-02 08:41:37--  https://doc-00-bo-docs.googleusercontent.com/docs/securesc/ha0ro937gcuc7l7deffksulhg5h7mbp1/2lhh6bmv0s0o4pre74iqnbnld13nod6j/1638444000000/16189157874053420687/*/1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG
+Распознаётся doc-00-bo-docs.googleusercontent.com (doc-00-bo-docs.googleusercontent.com)... 142.250.74.65, 2a00:1450:400f:802::2001
+Подключение к doc-00-bo-docs.googleusercontent.com (doc-00-bo-docs.googleusercontent.com)|142.250.74.65|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа... 200 OK
+Длина: 5432736 (5,2M) [application/octet-stream]
+Сохранение в: «otus_task2.file»
+
+100%[==========================================================================================================>] 5 432 736   6,87MB/s   за 0,8s
+
+2021-12-02 08:41:39 (6,87 MB/s) - «otus_task2.file» сохранён [5432736/5432736]
+
+
+[1]+  Done                    wget -O otus_task2.file --no-check-certificate https://drive.google.com/u/0/uc?id=1gH8gCL9y7Nd5Ti3IRmplZPF1XjzxeRAG
+[root@zfs ~]# zfs receive otus/test@today <
+-bash: syntax error near unexpected token `newline'
+[root@zfs ~]# zfs receive otus/test@today < otus_task2.file
+[root@zfs ~]# find /otus/test -name "secret_message"
+/otus/test/task1/file_mess/secret_message
+[root@zfs ~]# cat /otus/test/task1/file_mess/secret_message
+https://github.com/sindresorhus/awesome
+[root@zfs ~]#
